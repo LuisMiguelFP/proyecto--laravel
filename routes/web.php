@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session')])
         Route::get('/reservations/{slug}/confirmation', [ReservationController::class, 'confirmation'])->name('reservations.confirmation');
         Route::get('/my-reservations', [ReservationController::class, 'myReservations'])->name('my-reservations');
         Route::delete('/my-reservations/{reservation}', [ReservationController::class, 'destroy'])->name('my-reservations.destroy');
+        Route::put('/my-reservations/{reservation}/reschedule', [ReservationController::class, 'reschedule'])->name('my-reservations.reschedule');
 
         Route::get('/notifications/pending-count', function () {
             if (! auth()->user()->is_admin) {

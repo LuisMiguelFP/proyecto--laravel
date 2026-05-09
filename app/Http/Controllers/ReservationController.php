@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Events\ReservationCreated as ReservationCreatedEvent;
 use App\Mail\ReservationCreated;
+use App\Mail\ReservationRescheduled;
 use App\Mail\ReservationStatusChanged;
 use App\Models\Reservation;
 use App\Models\Space;
+use App\Models\User;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -145,12 +147,56 @@ class ReservationController extends Controller
         ]);
     }
 
+    // PUT /my-reservations/{reservation}/reschedule
+    public function reschedule(Request $request, Reservation $reservation)
+    {
+        abort_if($reservation->user_id !== Auth::id(), 403);
+        abort_unless($reservation->isPending(), 422, 'Solo se pueden reagendar reservas pendientes.');
+
+        $validated = $request->validate([
+            'start_time' => ['required', 'date'],
+            'end_time'   => ['required', 'date', 'after:start_time'],
+        ]);
+
+        $space = $reservation->space;
+        $start = Carbon::parse($validated['start_time']);
+        $end   = Carbon::parse($validated['end_time']);
+
+        $error = $this->availability->validate($space, $start, $end, $reservation->id);
+        if ($error) {
+            return back()->withErrors(['availability' => $error]);
+        }
+
+        $reservation->update([
+            'start_time' => $start,
+            'end_time'   => $end,
+        ]);
+
+        $reservation->load('space');
+        Mail::to($reservation->user_email)->send(new ReservationRescheduled($reservation));
+
+        $admins = User::where('is_admin', true)->get();
+        foreach ($admins as $admin) {
+            Mail::to($admin->email)->send(new ReservationRescheduled($reservation));
+        }
+
+        return back()->with('success', 'Reserva reagendada exitosamente.');
+    }
+
     public function destroy(Reservation $reservation)
     {
         abort_if($reservation->user_id !== Auth::id(), 403);
         abort_unless(in_array($reservation->status, [Reservation::STATUS_PENDING, Reservation::STATUS_CONFIRMED]), 422);
 
         $reservation->update(['status' => Reservation::STATUS_CANCELLED]);
+
+        $reservation->load('space');
+        Mail::to($reservation->user_email)->send(new ReservationStatusChanged($reservation));
+
+        $admins = User::where('is_admin', true)->get();
+        foreach ($admins as $admin) {
+            Mail::to($admin->email)->send(new ReservationStatusChanged($reservation));
+        }
 
         return back()->with('success', 'Reserva cancelada.');
     }
