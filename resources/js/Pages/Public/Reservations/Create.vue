@@ -12,11 +12,11 @@ const props = defineProps({
     auth: Object,
 })
 
-const selectedLevel = ref('basica')
+const selectedLevel = ref(props.prefill?.level ?? 'basica')
 
 const form = useForm({
     space_id:   props.space.id,
-    level:      'basica',
+    level:      props.prefill?.level ?? 'basica',
     start_time: props.prefill?.start ? new Date(props.prefill.start).toISOString().slice(0, 16) : '',
     end_time:   props.prefill?.end   ? new Date(props.prefill.end).toISOString().slice(0, 16)   : '',
     user_name:  props.auth?.user?.name  ?? '',

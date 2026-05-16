@@ -37,6 +37,7 @@ class ReservationController extends Controller
             'prefill' => [
                 'start' => $start?->toIso8601String(),
                 'end'   => $end?->toIso8601String(),
+                'level' => $request->level,
             ],
             'levels'      => Reservation::LEVELS,
             'slotMinutes' => (int) env('RESERVATION_SLOT_MINUTES', 60),

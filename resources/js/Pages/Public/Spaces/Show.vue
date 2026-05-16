@@ -13,10 +13,11 @@ const props = defineProps({
 const logoutForm = useForm({})
 function logout() { logoutForm.post('/logout') }
 
-function selectSlot(slot) {
+function selectSlot(slot, level = null) {
     router.get('/reservations/new', {
         space: props.space.slug,
         start: slot.start,
+        level: level,
     })
 }
 
@@ -163,7 +164,7 @@ const levelBtn = {
                                 <button
                                     v-for="slot in upcomingSlots.slice(0, 3)"
                                     :key="slot.start"
-                                    @click="selectSlot(slot)"
+                                    @click="selectSlot(slot, key)"
                                     :class="['w-full text-left text-xs px-3 py-2 rounded-lg border hover:opacity-80 transition font-medium', levelBadge[key].replace('text-', 'border-').replace('/20', '/30')]"
                                 >
                                     {{ new Date(slot.start).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' }) }}
@@ -174,7 +175,7 @@ const levelBtn = {
                         </div>
 
                         <button
-                            @click="selectSlot(upcomingSlots[0] ?? { start: '' })"
+                            @click="selectSlot(upcomingSlots[0] ?? { start: '' }, key)"
                             :class="['w-full py-2.5 text-white font-semibold rounded-xl text-sm transition', levelBtn[key]]"
                         >
                             Reservar plan {{ info.label }}
