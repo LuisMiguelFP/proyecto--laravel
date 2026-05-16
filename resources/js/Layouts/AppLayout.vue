@@ -160,7 +160,7 @@ const logout = () => {
                         class="w-14 h-14 rounded-full bg-[#0F1219] border-2 border-neon-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_30px_rgba(34,197,94,0.6)] transition-all duration-300 flex items-center justify-center group"
                     >
                         <span class="text-neon-green-500 font-bold text-lg">{{ $page.props.auth.user.name.charAt(0).toUpperCase() }}</span>
-                        <div class="absolute inset-0 rounded-full bg-neon-green-500/20 animate-ping"></div>
+                        <div class="absolute inset-0 rounded-full bg-neon-green-500/20 opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-opacity duration-300"></div>
                     </button>
 
                     <!-- Menú Desplegable Simplificado -->

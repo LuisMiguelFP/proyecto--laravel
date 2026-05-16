@@ -13,6 +13,7 @@ use App\Services\AvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
@@ -77,11 +78,26 @@ class ReservationController extends Controller
 
         event(new ReservationCreatedEvent($reservation));
 
-        Mail::to($reservation->user_email)->send(new ReservationCreated($reservation));
+        // Enviar email de confirmación al usuario
+        try {
+            Mail::to($reservation->user_email)->queue(new ReservationCreated($reservation));
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de reserva creada al usuario: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+                'user_email' => $reservation->user_email,
+            ]);
+        }
 
-        $admins = \App\Models\User::where('is_admin', true)->get();
-        foreach ($admins as $admin) {
-            Mail::to($admin->email)->send(new \App\Mail\AdminReservationCreated($reservation));
+        // Notificar a todos los admins
+        try {
+            $admins = User::where('is_admin', true)->get();
+            foreach ($admins as $admin) {
+                Mail::to($admin->email)->queue(new \App\Mail\AdminReservationCreated($reservation));
+            }
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de nueva reserva a admins: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+            ]);
         }
 
         return Inertia::render('Public/Reservations/Confirmation', [
@@ -173,11 +189,27 @@ class ReservationController extends Controller
         ]);
 
         $reservation->load('space');
-        Mail::to($reservation->user_email)->send(new ReservationRescheduled($reservation));
 
-        $admins = User::where('is_admin', true)->get();
-        foreach ($admins as $admin) {
-            Mail::to($admin->email)->send(new ReservationRescheduled($reservation));
+        // Notificar al usuario sobre reagendamiento
+        try {
+            Mail::to($reservation->user_email)->queue(new ReservationRescheduled($reservation));
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de reagendamiento al usuario: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+                'user_email' => $reservation->user_email,
+            ]);
+        }
+
+        // Notificar a admins
+        try {
+            $admins = User::where('is_admin', true)->get();
+            foreach ($admins as $admin) {
+                Mail::to($admin->email)->queue(new ReservationRescheduled($reservation));
+            }
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de reagendamiento a admins: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+            ]);
         }
 
         return back()->with('success', 'Reserva reagendada exitosamente.');
@@ -191,11 +223,27 @@ class ReservationController extends Controller
         $reservation->update(['status' => Reservation::STATUS_CANCELLED]);
 
         $reservation->load('space');
-        Mail::to($reservation->user_email)->send(new ReservationStatusChanged($reservation));
 
-        $admins = User::where('is_admin', true)->get();
-        foreach ($admins as $admin) {
-            Mail::to($admin->email)->send(new ReservationStatusChanged($reservation));
+        // Notificar al usuario sobre cancelación
+        try {
+            Mail::to($reservation->user_email)->queue(new ReservationStatusChanged($reservation));
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de cancelación al usuario: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+                'user_email' => $reservation->user_email,
+            ]);
+        }
+
+        // Notificar a admins
+        try {
+            $admins = User::where('is_admin', true)->get();
+            foreach ($admins as $admin) {
+                Mail::to($admin->email)->queue(new ReservationStatusChanged($reservation));
+            }
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de cancelación a admins: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+            ]);
         }
 
         return back()->with('success', 'Reserva cancelada.');

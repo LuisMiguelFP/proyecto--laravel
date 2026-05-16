@@ -80,4 +80,23 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'admin'])
         Route::post('/reservations/{reservation}/reject', [ReservationAdminController::class, 'reject'])->name('reservations.reject');
         Route::post('/reservations/{reservation}/cancel', [ReservationAdminController::class, 'cancel'])->name('reservations.cancel');
         Route::delete('/reservations/{reservation}', [ReservationAdminController::class, 'destroy'])->name('reservations.destroy');
+
+        // Ruta de prueba para verificar que el envío de email funciona
+        Route::get('/test-email', function () {
+            if (!app()->environment('local')) {
+                abort(404);
+            }
+            try {
+                \Illuminate\Support\Facades\Mail::raw(
+                    '¡Hola! Este es un correo de prueba desde Sala Electrónica. Si recibes este mensaje, la configuración de Gmail SMTP está funcionando correctamente. 🎉',
+                    function ($message) {
+                        $message->to(auth()->user()->email)
+                                ->subject('✅ Prueba de correo — Sala Electrónica');
+                    }
+                );
+                return back()->with('success', 'Email de prueba enviado a ' . auth()->user()->email . '. ¡Revisa tu bandeja!');
+            } catch (\Exception $e) {
+                return back()->with('error', 'Error al enviar email: ' . $e->getMessage());
+            }
+        })->name('test-email');
     });

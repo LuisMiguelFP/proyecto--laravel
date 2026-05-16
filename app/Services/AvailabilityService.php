@@ -27,8 +27,11 @@ class AvailabilityService
     ): ?string {
         $minutes = $start->diffInMinutes($end);
 
-        if ($minutes < $this->slotMinutes || $minutes % $this->slotMinutes !== 0) {
-            return "La duración mínima es {$this->slotMinutes} minutos.";
+        if ($minutes < $this->slotMinutes) {
+            return "La duración mínima de la reserva es de {$this->slotMinutes} minutos. Seleccionaste {$minutes} minutos.";
+        }
+        if ($minutes % $this->slotMinutes !== 0) {
+            return "La duración debe ser en bloques exactos de {$this->slotMinutes} minutos (ej: 1 hora, 2 horas). Seleccionaste {$minutes} minutos.";
         }
 
         if ($start->gte($end)) {

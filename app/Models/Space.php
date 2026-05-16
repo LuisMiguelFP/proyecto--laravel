@@ -93,8 +93,8 @@ class Space extends Model
     {
         return $this->availabilities()
             ->where('day_of_week', $start->dayOfWeek)
-            ->where('start_time', '<=', $start->format('H:i:s'))
-            ->where('end_time',   '>=', $end->format('H:i:s'))
+            ->where('start_time', '<=', $start->format('H:i'))
+            ->where('end_time',   '>=', $end->format('H:i'))
             ->exists();
     }
 }

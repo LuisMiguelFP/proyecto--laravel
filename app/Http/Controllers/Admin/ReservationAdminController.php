@@ -9,6 +9,7 @@ use App\Models\Space;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
@@ -58,9 +59,18 @@ class ReservationAdminController extends Controller
         abort_unless($reservation->isPending(), 422, 'Solo se pueden confirmar reservas pendientes.');
 
         $reservation->update(['status' => Reservation::STATUS_CONFIRMED]);
-        Mail::to($reservation->user_email)->send(new ReservationStatusChanged($reservation));
 
-        return back()->with('success', 'Reserva confirmada.');
+        try {
+            $reservation->load('space');
+            Mail::to($reservation->user_email)->queue(new ReservationStatusChanged($reservation));
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de confirmación al usuario: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+                'user_email' => $reservation->user_email,
+            ]);
+        }
+
+        return back()->with('success', 'Reserva confirmada. Se envió notificación al usuario.');
     }
 
     // POST /admin/reservations/{reservation}/reject
@@ -69,9 +79,18 @@ class ReservationAdminController extends Controller
         abort_unless($reservation->isPending(), 422, 'Solo se pueden rechazar reservas pendientes.');
 
         $reservation->update(['status' => Reservation::STATUS_REJECTED]);
-        Mail::to($reservation->user_email)->send(new ReservationStatusChanged($reservation));
 
-        return back()->with('success', 'Reserva rechazada.');
+        try {
+            $reservation->load('space');
+            Mail::to($reservation->user_email)->queue(new ReservationStatusChanged($reservation));
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de rechazo al usuario: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+                'user_email' => $reservation->user_email,
+            ]);
+        }
+
+        return back()->with('success', 'Reserva rechazada. Se envió notificación al usuario.');
     }
 
     // POST /admin/reservations/{reservation}/cancel
@@ -80,9 +99,18 @@ class ReservationAdminController extends Controller
         abort_unless($reservation->isConfirmed(), 422, 'Solo se pueden cancelar reservas confirmadas.');
 
         $reservation->update(['status' => Reservation::STATUS_CANCELLED]);
-        Mail::to($reservation->user_email)->send(new ReservationStatusChanged($reservation));
 
-        return back()->with('success', 'Reserva cancelada.');
+        try {
+            $reservation->load('space');
+            Mail::to($reservation->user_email)->queue(new ReservationStatusChanged($reservation));
+        } catch (\Exception $e) {
+            Log::error('Error encolando email de cancelación al usuario: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+                'user_email' => $reservation->user_email,
+            ]);
+        }
+
+        return back()->with('success', 'Reserva cancelada. Se envió notificación al usuario.');
     }
 
     public function destroy(Reservation $reservation)
