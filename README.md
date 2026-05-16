@@ -102,6 +102,6 @@ Para levantar el proyecto en tu entorno local, necesitas ejecutar dos procesos e
 
 *En esta sección se puede incluir el video o captura que muestra la funcionalidad del sistema (consulta de disponibilidad, creación de reserva, calendario y panel administrativo).*
 
-[Enlace al Video de Evidencia](#)
+[Ver Video de Evidencia (Google Drive)](https://drive.google.com/file/d/1kjFTg4-Q1DpPM1AhdKdTHy9rALMEIJOm/view?usp=sharing)
 
 ¡Listo! Ya puedes ingresar al sistema de reservas y empezar a utilizarlo.
